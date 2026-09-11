@@ -1,6 +1,7 @@
 export const USUARIO = "Tomás M.";
+export const INICIALES = "TM";
 export const CAJA = "Caja 2";
-export const SUCURSAL = "Sucursal Satélite";
+export const SUCURSAL = "Satélite";
 
 const fmtMoneda = new Intl.NumberFormat("es-MX", {
   minimumFractionDigits: 2,
@@ -22,7 +23,7 @@ export function pct(parte: number, total: number): number {
 }
 
 const DIAS = ["domingo", "lunes", "martes", "miércoles", "jueves", "viernes", "sábado"];
-const DIAS_CORTO = ["dom", "lun", "mar", "mié", "jue", "vie", "sáb"];
+const INICIAL_DIA = ["D", "L", "M", "M", "J", "V", "S"];
 const MESES = [
   "enero",
   "febrero",
@@ -74,14 +75,18 @@ export function sumaDias(iso: string, n: number): string {
   return aISO(d);
 }
 
+/** V 11/09/26 */
+export function fechaCortaISMO(iso: string): string {
+  const d = aFecha(iso);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const aa = String(d.getFullYear()).slice(2);
+  return `${INICIAL_DIA[d.getDay()]} ${dd}/${mm}/${aa}`;
+}
+
 export function fechaLarga(iso: string): string {
   const d = aFecha(iso);
   return `${DIAS[d.getDay()]} ${d.getDate()} ${MESES_CORTO[d.getMonth()]} ${d.getFullYear()}`;
-}
-
-export function fechaCorta(iso: string): string {
-  const d = aFecha(iso);
-  return `${DIAS_CORTO[d.getDay()]} ${d.getDate()} ${MESES_CORTO[d.getMonth()]}`;
 }
 
 export function fechaDDMMAAAA(iso: string): string {
@@ -93,19 +98,31 @@ export function nombreMes(mes: number): string {
   return MESES[mes];
 }
 
-export function horaCorta(ts: number): string {
-  const d = new Date(ts);
-  return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+/** 7:45AM · 1:34PM */
+export function hora12(ts: number | string): string {
+  let h: number;
+  let m: number;
+  if (typeof ts === "string") {
+    const [hh, mm] = ts.split(":").map(Number);
+    h = hh;
+    m = mm;
+  } else {
+    const d = new Date(ts);
+    h = d.getHours();
+    m = d.getMinutes();
+  }
+  const suf = h >= 12 ? "PM" : "AM";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `${h12}:${String(m).padStart(2, "0")}${suf}`;
 }
 
-export function haceRato(ts: number, ahora: number): string {
-  const seg = Math.max(0, Math.floor((ahora - ts) / 1000));
-  if (seg < 60) return "hace unos segundos";
-  const min = Math.floor(seg / 60);
-  if (min < 60) return `hace ${min} min`;
-  const h = Math.floor(min / 60);
-  if (h < 24) return `hace ${h} h`;
-  return `hace ${Math.floor(h / 24)} d`;
+/** Actu. 7:34 a.m */
+export function selloActualizado(ts: number): string {
+  const d = new Date(ts);
+  const h = d.getHours();
+  const suf = h >= 12 ? "p.m" : "a.m";
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return `Actu. ${h12}:${String(d.getMinutes()).padStart(2, "0")} ${suf}`;
 }
 
 export function id(prefijo: string): string {

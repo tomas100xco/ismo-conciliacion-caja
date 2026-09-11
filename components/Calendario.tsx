@@ -6,7 +6,14 @@ import { estadoDia, ETIQUETA_DIA, TONO_DIA } from "@/lib/reglas";
 import { useApp } from "@/lib/store";
 import { EstadoDia } from "@/lib/tipos";
 import { Marca, Izq, Der, Abajo, Equis } from "./Iconos";
-import { FORMA_DIA } from "./Chips";
+
+const FORMA_DIA: Record<EstadoDia, "circulo" | "triangulo" | "octagono" | "cuadrado" | "aro" | "doble"> = {
+  "sin-movimiento": "aro",
+  "sin-cerrar": "triangulo",
+  "cerrado-con-diferencia": "octagono",
+  conciliado: "cuadrado",
+  validado: "doble",
+};
 
 const TONO_BG: Record<EstadoDia, string> = {
   "sin-movimiento": "transparent",
@@ -79,15 +86,15 @@ export function Calendario({ onCerrar }: { onCerrar: () => void }) {
 
   return (
     <div className="velo" data-fb-ignorar onClick={onCerrar}>
-      <div className="modal" onClick={(e) => e.stopPropagation()}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "16px 16px 8px" }}>
+      <div className="hoja" onClick={(e) => e.stopPropagation()}>
+        <div className="hoja-cabeza">
           <div style={{ flexGrow: 1, fontSize: 16, fontWeight: 700 }}>Elegir día de trabajo</div>
           <button className="btn-icono" aria-label="Cerrar" onClick={onCerrar}>
             <Equis s={22} />
           </button>
         </div>
 
-        <div style={{ padding: "0 16px 16px", display: "flex", flexDirection: "column", gap: 14 }}>
+        <div className="hoja-cuerpo">
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <button
               className="btn btn-linea"

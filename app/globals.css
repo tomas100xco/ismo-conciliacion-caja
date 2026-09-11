@@ -1,10 +1,11 @@
 /* ============================================================
-   ISMO Suite — tokens
+   ISMO Suite · tokens
+   El color vive en los chips y en las burbujas de estado.
+   Ninguna superficie grande se tiñe.
    ============================================================ */
 :root {
   --paper: #ffffff;
   --lienzo: #f4f6f8;
-  --elevado: #ffffff;
   --hueco: #edf0f3;
 
   --texto-1: #1c252e;
@@ -36,11 +37,11 @@
   --neutro-bg: #edf0f3;
   --neutro-fg: #454f5b;
 
-  --editado: rgba(255, 171, 0, 0.34);
+  --editado: rgba(255, 171, 0, 0.32);
   --editado-texto: #5c4a23;
 
-  --sombra-card: 0 0 2px rgba(145, 158, 171, 0.2), 0 12px 24px -4px rgba(145, 158, 171, 0.12);
-  --sombra-flota: 0 1px 2px rgba(28, 37, 46, 0.08), 0 16px 40px rgba(28, 37, 46, 0.1);
+  --sombra-card: 0 0 2px rgba(145, 158, 171, 0.16), 0 8px 18px -6px rgba(145, 158, 171, 0.16);
+  --sombra-flota: 0 1px 2px rgba(28, 37, 46, 0.08), 0 16px 40px rgba(28, 37, 46, 0.12);
 
   --r-s: 4px;
   --r-m: 8px;
@@ -52,18 +53,19 @@
   --dur-corta: 150ms;
   --dur-normal: 300ms;
   --dur-compleja: 375ms;
-  --dur-lenta: 640ms;
   --ease-entra: cubic-bezier(0.16, 1, 0.3, 1);
   --ease-estado: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /* ancho fijo de la columna de burbujas: alinea todos los montos */
+  --col-estado: 44px;
 
   color-scheme: light dark;
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-tema="light"]) {
-    --paper: #0f1419;
-    --lienzo: #151b21;
-    --elevado: #1c252e;
+    --paper: #151b21;
+    --lienzo: #0f1419;
     --hueco: #232d37;
     --texto-1: #f4f6f8;
     --texto-2: #919ba6;
@@ -85,15 +87,15 @@
     --violeta-fg: #d6b3ff;
     --neutro-bg: #232d37;
     --neutro-fg: #b4bdc6;
-    --editado: rgba(255, 171, 0, 0.3);
+    --editado: rgba(255, 171, 0, 0.28);
     --editado-texto: #ffd66b;
-    --sombra-card: 0 1px 2px rgba(0, 0, 0, 0.5), 0 8px 24px rgba(0, 0, 0, 0.35);
+    --sombra-card: 0 1px 2px rgba(0, 0, 0, 0.45), 0 8px 20px rgba(0, 0, 0, 0.3);
     --sombra-flota: 0 1px 2px rgba(0, 0, 0, 0.6), 0 16px 40px rgba(0, 0, 0, 0.45);
   }
 }
 
 /* ============================================================
-   base
+   base · mobile first
    ============================================================ */
 * {
   box-sizing: border-box;
@@ -123,9 +125,6 @@ button {
 a {
   color: var(--texto-1);
 }
-a:hover {
-  color: var(--texto-2);
-}
 
 .n {
   font-family: var(--num);
@@ -140,13 +139,12 @@ a:hover {
   display: flex;
   flex-direction: column;
   background: var(--lienzo);
-  position: relative;
 }
 
 .overline {
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
   color: var(--texto-2);
 }
@@ -156,8 +154,22 @@ a:hover {
   color: var(--texto-3);
 }
 
+.cuerpo {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+}
+@media (min-width: 600px) {
+  .cuerpo {
+    padding: 16px;
+    gap: 12px;
+  }
+}
+
 /* ============================================================
-   superficies
+   superficies · sombra o borde, nunca los dos
    ============================================================ */
 .card {
   background: var(--paper);
@@ -168,6 +180,9 @@ a:hover {
 .barra {
   background: var(--paper);
   border-bottom: 1px solid var(--borde-1);
+  position: sticky;
+  top: 0;
+  z-index: 12;
 }
 
 .pie {
@@ -175,7 +190,8 @@ a:hover {
   border-top: 1px solid var(--borde-1);
   position: sticky;
   bottom: 0;
-  z-index: 3;
+  z-index: 12;
+  padding: 10px 12px calc(10px + env(safe-area-inset-bottom));
 }
 
 /* ============================================================
@@ -187,15 +203,16 @@ a:hover {
   justify-content: center;
   gap: 8px;
   height: 44px;
-  padding: 0 16px;
+  padding: 0 14px;
   border-radius: var(--r-m);
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
   border: 1px solid transparent;
+  color: var(--texto-1);
+  background: transparent;
   transition: background var(--dur-corta) var(--ease-estado),
-    border-color var(--dur-corta) var(--ease-estado), transform var(--dur-corta) var(--ease-estado),
-    opacity var(--dur-corta) var(--ease-estado);
+    border-color var(--dur-corta) var(--ease-estado), opacity var(--dur-corta) var(--ease-estado);
 }
 .btn:active {
   transform: translateY(1px);
@@ -208,46 +225,29 @@ a:hover {
   opacity: 0.4;
   cursor: not-allowed;
 }
-.btn[disabled]:active {
-  transform: none;
-}
 
 .btn-solido {
   background: var(--marca);
   color: var(--sobre-marca);
 }
-.btn-solido:hover:not([disabled]) {
-  background: var(--texto-2);
-}
-
 .btn-linea {
   background: var(--paper);
-  color: var(--texto-1);
   border-color: var(--borde-2);
 }
 .btn-linea:hover:not([disabled]) {
   border-color: var(--texto-1);
-  background: var(--hueco);
 }
-
-.btn-linea-fuerte {
-  background: var(--paper);
-  color: var(--texto-1);
-  border: 1.5px solid var(--marca);
+.btn-alto {
+  height: 52px;
+  font-size: 15px;
 }
-.btn-linea-fuerte:hover:not([disabled]) {
-  background: var(--hueco);
-}
-
-.btn-grande {
-  height: 64px;
-  font-size: 16px;
-  gap: 10px;
+.btn-lleno {
+  width: 100%;
 }
 
 .btn-icono {
-  width: 44px;
-  height: 44px;
+  width: 40px;
+  height: 40px;
   padding: 0;
   border-radius: var(--r-m);
   background: transparent;
@@ -256,7 +256,8 @@ a:hover {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  color: var(--texto-1);
+  color: var(--texto-2);
+  flex-shrink: 0;
   transition: background var(--dur-corta) var(--ease-estado);
 }
 .btn-icono:hover {
@@ -270,11 +271,28 @@ a:hover {
 .par {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
+}
+
+/* La tirilla va al frente de su recibo; en móvil, justo debajo. */
+.pareja {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1px;
+  background: var(--borde-1);
+}
+@media (min-width: 560px) {
+  .pareja[data-doble="true"] {
+    grid-template-columns: 1.15fr 1fr;
+  }
+}
+.pareja > * {
+  background: var(--paper);
+  min-width: 0;
 }
 
 /* ============================================================
-   chips de estado
+   chips
    ============================================================ */
 .chip {
   display: inline-flex;
@@ -286,36 +304,123 @@ a:hover {
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
-  transition: background var(--dur-normal) var(--ease-estado),
-    color var(--dur-normal) var(--ease-estado);
 }
-.chip-neutro {
-  background: var(--neutro-bg);
-  color: var(--neutro-fg);
+.chip-neutro { background: var(--neutro-bg); color: var(--neutro-fg); }
+.chip-alerta { background: var(--alerta-bg); color: var(--alerta-fg); }
+.chip-error { background: var(--error-bg); color: var(--error-fg); }
+.chip-exito { background: var(--exito-bg); color: var(--exito-fg); }
+.chip-info { background: var(--info-bg); color: var(--info-fg); }
+.chip-violeta { background: var(--violeta-bg); color: var(--violeta-fg); }
+
+/* ============================================================
+   burbuja de estado · el único lugar donde vive el color
+   ============================================================ */
+.burbuja-estado {
+  width: var(--col-estado);
+  height: var(--col-estado);
+  flex-shrink: 0;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  border-radius: 999px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: transform var(--dur-corta) var(--ease-estado);
 }
-.chip-alerta {
-  background: var(--alerta-bg);
-  color: var(--alerta-fg);
+.burbuja-estado:hover {
+  transform: scale(1.06);
 }
-.chip-error {
-  background: var(--error-bg);
-  color: var(--error-fg);
+.burbuja-estado:focus-visible {
+  outline: 2px solid var(--marca);
+  outline-offset: 2px;
 }
-.chip-exito {
-  background: var(--exito-bg);
-  color: var(--exito-fg);
+.burbuja-estado .valor {
+  position: absolute;
+  font-family: var(--num);
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
 }
-.chip-info {
-  background: var(--info-bg);
-  color: var(--info-fg);
+.anillo-fondo {
+  stroke: var(--borde-1);
 }
-.chip-violeta {
-  background: var(--violeta-bg);
-  color: var(--violeta-fg);
+.anillo-valor {
+  transition: stroke-dashoffset var(--dur-normal) var(--ease-estado);
 }
 
 /* ============================================================
-   campos
+   filas · compactas
+   ============================================================ */
+.fila {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+  padding: 8px 10px 8px 12px;
+  background: var(--paper);
+  border-radius: 12px;
+  box-shadow: var(--sombra-card);
+  cursor: pointer;
+  text-align: left;
+  border: 0;
+  width: 100%;
+  color: inherit;
+}
+.fila:active {
+  transform: translateY(1px);
+}
+.fila:focus-visible {
+  outline: 2px solid var(--marca);
+  outline-offset: 2px;
+}
+
+.fila-texto {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex-grow: 1;
+  min-width: 0;
+}
+
+/* ============================================================
+   segmentos
+   ============================================================ */
+.segmentos {
+  display: flex;
+  gap: 4px;
+  padding: 3px;
+  background: var(--hueco);
+  border-radius: 10px;
+}
+.segmento {
+  flex-grow: 1;
+  height: 34px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--neutro-fg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 0;
+  transition: background var(--dur-corta) var(--ease-estado);
+}
+.segmento[data-activo="true"] {
+  background: var(--paper);
+  color: var(--texto-1);
+  font-weight: 700;
+  box-shadow: 0 1px 2px rgba(28, 37, 46, 0.14);
+}
+
+/* ============================================================
+   campos · edición en sitio
    ============================================================ */
 .campo {
   width: 100%;
@@ -329,7 +434,6 @@ a:hover {
   font-size: 14px;
   line-height: 1.55;
   resize: vertical;
-  transition: border-color var(--dur-corta) var(--ease-estado);
 }
 .campo:focus {
   outline: none;
@@ -346,17 +450,13 @@ a:hover {
   color: var(--neutro-fg);
 }
 
-/* ============================================================
-   edición en sitio · la seña de "editado" es deliberadamente sutil
-   ============================================================ */
 .editable {
   display: inline-block;
   border-radius: var(--r-s);
   padding: 1px 3px;
   margin: -1px -3px;
   cursor: text;
-  transition: background var(--dur-corta) var(--ease-estado),
-    box-shadow var(--dur-corta) var(--ease-estado);
+  transition: background var(--dur-corta) var(--ease-estado);
 }
 .editable:hover {
   background: var(--hueco);
@@ -365,12 +465,10 @@ a:hover {
   outline: 2px solid var(--marca);
   outline-offset: 1px;
 }
-
 .editado {
   box-shadow: inset 0 -0.42em 0 var(--editado);
   color: var(--editado-texto);
 }
-
 .editable-input {
   font: inherit;
   color: inherit;
@@ -380,17 +478,17 @@ a:hover {
   padding: 0 4px;
   margin: -1px -5px;
   width: 100%;
-  min-width: 60px;
+  min-width: 56px;
 }
 .editable-input:focus {
   outline: none;
 }
 
 /* ============================================================
-   progreso · esqueleto
+   progreso
    ============================================================ */
 .riel {
-  height: 6px;
+  height: 4px;
   border-radius: 999px;
   background: var(--borde-1);
   overflow: hidden;
@@ -406,13 +504,8 @@ a:hover {
   animation: pulso 1.8s ease-in-out infinite;
 }
 @keyframes pulso {
-  0%,
-  100% {
-    opacity: 0.45;
-  }
-  50% {
-    opacity: 1;
-  }
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
 }
 
 .gira {
@@ -420,204 +513,109 @@ a:hover {
   transform-origin: 50% 50%;
 }
 @keyframes gira {
-  to {
-    transform: rotate(360deg);
-  }
+  to { transform: rotate(360deg); }
 }
 
-/* ============================================================
-   entradas
-   ============================================================ */
 .entra {
   animation: entra var(--dur-normal) var(--ease-entra) both;
 }
 @keyframes entra {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: none; }
 }
 
 .aparece {
   animation: aparece var(--dur-normal) var(--ease-entra) both;
 }
 @keyframes aparece {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .sube {
   animation: sube var(--dur-compleja) var(--ease-entra) both;
 }
 @keyframes sube {
-  from {
-    opacity: 0;
-    transform: translateY(24px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+
+/* llama la atención sobre la ayuda cuando algo se rechaza */
+.llama {
+  animation: llama 1s var(--ease-estado) 3;
+}
+@keyframes llama {
+  0%, 100% { box-shadow: var(--sombra-flota); }
+  50% { box-shadow: var(--sombra-flota), 0 0 0 8px rgba(255, 171, 0, 0.3); }
 }
 
 /* ============================================================
-   filas tocables
-   ============================================================ */
-.fila {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-height: 68px;
-  padding: 12px 14px;
-  background: var(--paper);
-  border-radius: var(--r-l);
-  box-shadow: var(--sombra-card);
-  cursor: pointer;
-  text-align: left;
-  border: 0;
-  width: 100%;
-  color: inherit;
-  transition: transform var(--dur-corta) var(--ease-estado),
-    box-shadow var(--dur-corta) var(--ease-estado);
-}
-.fila:hover {
-  box-shadow: var(--sombra-flota);
-}
-.fila:active {
-  transform: translateY(1px);
-}
-.fila:focus-visible {
-  outline: 2px solid var(--marca);
-  outline-offset: 2px;
-}
-
-.miniatura {
-  width: 40px;
-  height: 40px;
-  border-radius: var(--r-m);
-  background: var(--hueco);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--texto-3);
-}
-
-/* ============================================================
-   segmentos
-   ============================================================ */
-.segmentos {
-  display: flex;
-  gap: 6px;
-  padding: 4px;
-  background: var(--hueco);
-  border-radius: 10px;
-}
-.segmento {
-  flex-grow: 1;
-  height: 36px;
-  border: 0;
-  border-radius: var(--r-m);
-  background: transparent;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--neutro-fg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  transition: background var(--dur-corta) var(--ease-estado),
-    color var(--dur-corta) var(--ease-estado);
-}
-.segmento[data-activo="true"] {
-  background: var(--paper);
-  color: var(--texto-1);
-  font-weight: 700;
-  box-shadow: 0 1px 2px rgba(28, 37, 46, 0.16);
-}
-
-/* ============================================================
-   calendario
-   ============================================================ */
-.semana {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
-}
-.dia-celda {
-  height: 52px;
-  border: 0;
-  border-radius: var(--r-m);
-  background: transparent;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  cursor: pointer;
-  font-family: inherit;
-  color: var(--texto-3);
-  transition: transform var(--dur-corta) var(--ease-estado),
-    background var(--dur-corta) var(--ease-estado);
-}
-.dia-celda:hover:not([disabled]) {
-  transform: translateY(-1px);
-}
-.dia-celda[disabled] {
-  cursor: default;
-  color: var(--borde-2);
-}
-.dia-celda[data-sel="true"] {
-  outline: 2px solid var(--marca);
-  outline-offset: 2px;
-}
-
-/* ============================================================
-   modal
+   hojas y modales
    ============================================================ */
 .velo {
   position: fixed;
   inset: 0;
-  background: rgba(15, 20, 25, 0.44);
+  background: rgba(15, 20, 25, 0.46);
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  z-index: 40;
-  padding: 16px;
+  z-index: 60;
+  padding: 0;
   animation: aparece var(--dur-compleja) var(--ease-entra) both;
-  overflow-y: auto;
 }
 @media (min-width: 600px) {
   .velo {
     align-items: center;
+    padding: 16px;
   }
 }
-.modal {
+.hoja {
   width: 100%;
   max-width: 688px;
+  max-height: 92dvh;
+  overflow-y: auto;
   background: var(--paper);
-  border-radius: var(--r-l);
+  border-radius: var(--r-l) var(--r-l) 0 0;
   box-shadow: var(--sombra-flota);
   animation: sube var(--dur-compleja) var(--ease-entra) both;
-  margin: auto 0;
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@media (min-width: 600px) {
+  .hoja {
+    border-radius: var(--r-l);
+  }
+}
+.hoja-cabeza {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 14px 8px;
+  position: sticky;
+  top: 0;
+  background: var(--paper);
+  z-index: 1;
+}
+.hoja-cuerpo {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 0 14px 16px;
 }
 
-.burbuja {
+/* ============================================================
+   botones flotantes
+   ============================================================ */
+.flotantes {
   position: fixed;
-  right: max(16px, calc(50vw - 344px));
-  bottom: 104px;
-  z-index: 20;
-  width: 56px;
-  height: 56px;
+  right: max(12px, calc(50vw - 348px));
+  bottom: calc(78px + env(safe-area-inset-bottom));
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.fab {
   border-radius: 999px;
   border: 1px solid var(--borde-1);
   background: var(--paper);
@@ -627,14 +625,107 @@ a:hover {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: transform var(--dur-corta) var(--ease-estado);
+  position: relative;
 }
-.burbuja:hover {
-  transform: translateY(-2px);
-}
-.burbuja:focus-visible {
+.fab:focus-visible {
   outline: 2px solid var(--marca);
   outline-offset: 3px;
+}
+.fab-chico {
+  width: 40px;
+  height: 40px;
+}
+.fab-grande {
+  width: 52px;
+  height: 52px;
+}
+.fab[data-activo="true"] {
+  background: var(--violeta-fg);
+  color: #fff;
+  border-color: var(--violeta-fg);
+}
+.insignia {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--violeta);
+  color: #fff;
+  font-family: var(--num);
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ============================================================
+   modo apuntar
+   ============================================================ */
+body[data-fb-modo="1"] [data-fb] {
+  outline: 1px dashed rgba(142, 51, 255, 0.45);
+  outline-offset: 2px;
+  border-radius: var(--r-s);
+  cursor: crosshair !important;
+  position: relative;
+}
+body[data-fb-modo="1"] [data-fb]:hover {
+  outline: 2px solid var(--violeta);
+  background: rgba(142, 51, 255, 0.09);
+}
+body[data-fb-modo="1"] [data-fb]:hover::after {
+  content: attr(data-fb);
+  position: absolute;
+  left: 0;
+  top: -19px;
+  z-index: 50;
+  background: var(--violeta-fg);
+  color: #fff;
+  font-family: var(--num);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  padding: 2px 6px;
+  border-radius: var(--r-s);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.cinta {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: var(--violeta-fg);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+.cinta .btn {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+  border-color: rgba(255, 255, 255, 0.45);
+  color: #fff;
+  background: transparent;
+}
+
+.codigo {
+  font-family: var(--num);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+  color: var(--violeta-fg);
+  background: var(--violeta-bg);
+  padding: 2px 6px;
+  border-radius: var(--r-s);
+  display: inline-block;
 }
 
 /* ============================================================
@@ -646,11 +737,11 @@ a:hover {
   border-collapse: collapse;
 }
 .cruce th {
-  height: 40px;
-  padding: 0 10px;
+  height: 36px;
+  padding: 0 8px;
   background: var(--marca);
   color: var(--sobre-marca);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -664,9 +755,9 @@ a:hover {
   border-radius: 0 var(--r-m) 0 0;
 }
 .cruce td {
-  height: 40px;
-  padding: 0 10px;
-  font-size: 14px;
+  height: 38px;
+  padding: 0 8px;
+  font-size: 13px;
   text-align: right;
   border-bottom: 1px solid var(--borde-1);
 }
@@ -674,110 +765,7 @@ a:hover {
   text-align: left;
   font-weight: 500;
 }
-.cruce tr:nth-child(even) td {
-  background: var(--lienzo);
-}
 
-/* ============================================================
-   modo feedback · cada pieza etiquetada se vuelve apuntable
-   ============================================================ */
-body[data-fb-modo="1"] [data-fb] {
-  outline: 1px dashed rgba(142, 51, 255, 0.5);
-  outline-offset: 2px;
-  border-radius: var(--r-s);
-  cursor: crosshair !important;
-  position: relative;
-}
-body[data-fb-modo="1"] [data-fb]:hover {
-  outline: 2px solid var(--violeta);
-  outline-offset: 2px;
-  background: rgba(142, 51, 255, 0.08);
-}
-body[data-fb-modo="1"] [data-fb]:hover::after {
-  content: attr(data-fb);
-  position: absolute;
-  left: 0;
-  top: -20px;
-  z-index: 30;
-  background: var(--violeta-fg);
-  color: #fff;
-  font-family: var(--num);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  padding: 2px 6px;
-  border-radius: var(--r-s);
-  white-space: nowrap;
-  pointer-events: none;
-}
-body[data-fb-modo="1"] .burbuja {
-  outline: 2px solid var(--violeta);
-}
-
-.cinta-fb {
-  position: sticky;
-  top: 0;
-  z-index: 25;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 16px;
-  background: var(--violeta-fg);
-  color: #fff;
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.nota-fila {
-  display: flex;
-  gap: 10px;
-  padding: 10px 12px;
-  background: var(--lienzo);
-  border-radius: var(--r-m);
-  align-items: flex-start;
-}
-
-.codigo {
-  font-family: var(--num);
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--violeta-fg);
-  background: var(--violeta-bg);
-  padding: 2px 6px;
-  border-radius: var(--r-s);
-  display: inline-block;
-}
-
-.tabs {
-  display: flex;
-  gap: 4px;
-  padding: 4px;
-  background: var(--hueco);
-  border-radius: 10px;
-}
-.tab {
-  flex-grow: 1;
-  height: 36px;
-  border: 0;
-  border-radius: var(--r-m);
-  background: transparent;
-  color: var(--neutro-fg);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background var(--dur-corta) var(--ease-estado);
-}
-.tab[data-activo="true"] {
-  background: var(--paper);
-  color: var(--texto-1);
-  font-weight: 700;
-  box-shadow: 0 1px 2px rgba(28, 37, 46, 0.16);
-}
-
-/* ============================================================
-   accesibilidad
-   ============================================================ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,

@@ -200,3 +200,31 @@ export function Marca({ forma, s = 8 }: { forma: "circulo" | "triangulo" | "octa
       );
   }
 }
+
+/* ---- medios de pago ---- */
+export const Efectivo = (p: P) => (
+  <Svg {...p}>
+    <rect x="2.5" y="6.5" width="19" height="11" rx="2" />
+    <circle cx="12" cy="12" r="2.6" />
+    <path d="M6 10v4M18 10v4" />
+  </Svg>
+);
+export const Transferencia = (p: P) => (
+  <Svg {...p}>
+    <path d="M4 8.5h13M13.5 5 17 8.5 13.5 12" />
+    <path d="M20 15.5H7M10.5 12 7 15.5 10.5 19" />
+  </Svg>
+);
+export const Nota = (p: P) => (
+  <Svg {...p}>
+    <path d="M5 4.5h14v12l-4 4H5z" />
+    <path d="M19 16.5h-4v4" />
+    <path d="M8.5 9h7M8.5 12.5h4" />
+  </Svg>
+);
+export const Reloj = (p: P) => (
+  <Svg {...p}>
+    <circle cx="12" cy="12" r="8.5" />
+    <path d="M12 7.5V12l3 1.8" />
+  </Svg>
+);

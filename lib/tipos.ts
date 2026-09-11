@@ -143,4 +143,6 @@ export type Estado = {
   auditoria: Auditoria[];
   diaSeleccionado: string;
   simularRechazo: boolean;
+  /** Se incrementa cuando algo se rechaza: hace parpadear el botón de ayuda. */
+  avisoAyuda: number;
 };

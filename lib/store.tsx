@@ -168,6 +168,7 @@ function reducer(e: Estado, a: Accion): Estado {
       );
 
     case "recibo.rechazado":
+      e = { ...e, avisoAyuda: e.avisoAyuda + 1 };
       return mapFolio(e, a.folioId, (f) =>
         mapRecibo(f, a.reciboId, (r) => ({
           ...r,
@@ -439,7 +440,7 @@ export function Proveedor({ children }: { children: React.ReactNode }) {
       const crudo = localStorage.getItem(CLAVE);
       if (crudo) {
         const p = JSON.parse(crudo) as Estado;
-        if (p && p.folios && p.dias) inicial = sanear(p);
+        if (p && p.folios && p.dias) inicial = sanear({ ...p, avisoAyuda: p.avisoAyuda ?? 0 });
       }
     } catch {
       inicial = null;

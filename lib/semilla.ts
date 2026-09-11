@@ -118,7 +118,8 @@ function cierreLimpio(fecha: string, sistema: Record<Medio, number>, recibos: nu
 
 /** El día de hoy es el guion aprobado en el lienzo de diseño. */
 function foliosDeHoy(hoy: string, r: () => number): Folio[] {
-  const base = Date.now();
+  // Horas de piso reales, no "ahora menos N": a las 8am nadie capturó a la 1am.
+  const h = (horas: number) => aFecha(hoy).getTime() + horas * 3600e3;
 
   const fs9048: Folio = {
     id: "f-hoy-9048",
@@ -126,7 +127,7 @@ function foliosDeHoy(hoy: string, r: () => number): Folio[] {
     caja: CAJA,
     factura: factura("FS-9048", hoy, "Rocío Márquez Alcántara", 8420),
     recibos: [],
-    creadoEn: base - 6 * 60e3,
+    creadoEn: h(18.83),
   };
 
   const a14875: Folio = {
@@ -146,7 +147,7 @@ function foliosDeHoy(hoy: string, r: () => number): Folio[] {
         },
       }),
     ],
-    creadoEn: base - 52 * 60e3,
+    creadoEn: h(17.68),
   };
 
   const fs9044: Folio = {
@@ -159,7 +160,7 @@ function foliosDeHoy(hoy: string, r: () => number): Folio[] {
         tirilla: tirilla(5750, "16:03", r, 5570),
       }),
     ],
-    creadoEn: base - 3 * 3600e3,
+    creadoEn: h(16.03),
   };
 
   const fs9031: Folio = {
@@ -168,7 +169,7 @@ function foliosDeHoy(hoy: string, r: () => number): Folio[] {
     caja: CAJA,
     factura: factura("FS-9031", hoy, "Ana Sofía Bermúdez", 3180),
     recibos: [recibo("R-2207", hoy, 3180, "credito", "16:48", r)],
-    creadoEn: base - 2.4 * 3600e3,
+    creadoEn: h(16.8),
   };
 
   const a14872: Folio = {
@@ -181,7 +182,7 @@ function foliosDeHoy(hoy: string, r: () => number): Folio[] {
       recibo("R-2202", hoy, 18600, "credito", "12:19", r, { tirilla: tirilla(18600, "12:20", r) }),
       recibo("R-2203", hoy, 10000, "debito", "12:24", r, { tirilla: tirilla(10000, "12:25", r) }),
     ],
-    creadoEn: base - 7 * 3600e3,
+    creadoEn: h(12.23),
   };
 
   return [fs9048, a14875, fs9044, fs9031, a14872];
@@ -341,6 +342,7 @@ export function semilla(): Estado {
     auditoria: [],
     diaSeleccionado: hoy,
     simularRechazo: false,
+    avisoAyuda: 0,
   };
 }
 

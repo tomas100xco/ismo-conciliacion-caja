@@ -3,7 +3,7 @@
 import React, { useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/store";
-import { fechaLarga, horaCorta, money, moneySigno, USUARIO } from "@/lib/formato";
+import { fechaCortaISMO, hora12, money, moneySigno, USUARIO } from "@/lib/formato";
 import {
   estadoDia,
   estadoFolio,
@@ -14,20 +14,10 @@ import {
   TOLERANCIA,
 } from "@/lib/reglas";
 import { MEDIOS, NOMBRE_MEDIO } from "@/lib/tipos";
-import { ChipDia, Chip } from "@/components/Chips";
+import { BurbujaDia } from "@/components/Estado";
 import { BotonesCaptura } from "@/components/Captura";
-import { Panel } from "@/components/Panel";
-import {
-  Alerta,
-  Atras,
-  Candado,
-  Documento,
-  Equis,
-  Imagen,
-  Info,
-  Palomita,
-  Subir,
-} from "@/components/Iconos";
+import { Flotantes } from "@/components/Flotantes";
+import { Atras, Documento, Equis, Imagen, Subir } from "@/components/Iconos";
 
 export default function PaginaCierre() {
   const router = useRouter();
@@ -36,7 +26,7 @@ export default function PaginaCierre() {
   const dia = estado.diaSeleccionado;
   const registro = estado.dias[dia];
   const entrada = useRef<HTMLInputElement>(null);
-  const [verDetalle, setVerDetalle] = useState(false);
+  const [pidiendo, setPidiendo] = useState(false);
 
   const folios = useMemo(() => estado.folios.filter((f) => f.dia === dia), [estado.folios, dia]);
   const enFolios = porMedioEnFolios(folios);
@@ -49,18 +39,22 @@ export default function PaginaCierre() {
 
   const sinCerrar = folios.filter((f) => estaSinCerrar(estadoFolio(f, registro)));
   const huerfanos = (registro?.huerfanos ?? []).filter((h) => !h.asignadoA);
+  const candidatos = folios.filter((f) => faltante(f) > TOLERANCIA);
 
   const explicacionLista = (cierre?.explicacion ?? "").trim().length >= 12;
   const evidenciaLista = (cierre?.evidencias.length ?? 0) > 0;
-  const puedeCerrar = !!cierre && (cuadra || (explicacionLista && evidenciaLista));
+  const puedeFirmar = cuadra || (explicacionLista && evidenciaLista);
 
-  const candidatos = folios.filter((f) => faltante(f) > TOLERANCIA);
+  function intentarCerrar() {
+    if (!cierre) return;
+    if (cuadra) app.cerrarDia(dia, 0);
+    else setPidiendo(true);
+  }
 
   return (
     <div className="app">
-      {/* ================= BARRA ================= */}
-      <div className="barra" style={{ position: "sticky", top: 0, zIndex: 10 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px" }}>
+      <div className="barra">
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "8px 12px" }}>
           <button
             className="btn-icono"
             aria-label="Volver"
@@ -68,45 +62,32 @@ export default function PaginaCierre() {
             data-fb-nombre="Flecha de volver"
             onClick={() => router.push("/")}
           >
-            <Atras s={24} />
+            <Atras s={22} />
           </button>
-          <div style={{ display: "flex", flexDirection: "column", gap: 1, flexGrow: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 16, fontWeight: 700 }} data-fb="CIERRE.TITULO" data-fb-nombre="Título del cierre">
+          <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, minWidth: 0 }}>
+            <span style={{ fontSize: 16, fontWeight: 700 }} data-fb="CIERRE.TITULO" data-fb-nombre="Título del cierre">
               Cierre de caja
-            </div>
-            <div className="caption" style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {fechaLarga(dia)} · Caja 2 · {USUARIO}
-            </div>
+            </span>
+            <span className="caption" style={{ fontSize: 11 }}>
+              {fechaCortaISMO(dia)} · Caja 2 · {USUARIO}
+            </span>
           </div>
-          {firmado ? (
-            <ChipDia estado={estDia} fb="CIERRE.ESTADO" />
-          ) : cierre ? (
-            <Chip tono={cuadra ? "exito" : "error"} forma={cuadra ? "circulo" : "octagono"} fb="CIERRE.ESTADO" fbNombre="Estado del cruce">
-              {cuadra ? "Cuadra" : "No cuadra"}
-            </Chip>
-          ) : null}
+          <BurbujaDia estado={estDia} fb="CIERRE.ESTADO" />
         </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, padding: "16px 16px 24px", flexGrow: 1 }}>
-        {/* ================= 1 · ARCHIVO ================= */}
+      <div className="cuerpo">
+        {/* ---------------- ARCHIVO ---------------- */}
         <div
           className="card"
-          style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}
+          style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}
           data-fb="CIERRE.BLOQUE.ARCHIVO"
-          data-fb-nombre="Bloque 1 · Archivo de cierre del sistema"
+          data-fb-nombre="Bloque del archivo del sistema"
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Paso n={1} />
-            <div style={{ fontSize: 16, fontWeight: 600, flexGrow: 1 }}>Archivo de cierre del sistema</div>
-          </div>
+          <div className="overline" style={{ fontSize: 10 }}>Archivo del sistema</div>
 
           {!cierre ? (
             <>
-              <div style={{ fontSize: 13, color: "var(--texto-2)", textWrap: "pretty" }}>
-                Sube el archivo que emite el DMS al cerrar el turno. Su columna queda congelada a
-                esa hora; la de folios sigue viva.
-              </div>
               <input
                 ref={entrada}
                 type="file"
@@ -119,31 +100,25 @@ export default function PaginaCierre() {
                 }}
               />
               <button
-                className="btn btn-grande btn-solido"
+                className="btn btn-solido btn-alto btn-lleno"
                 data-fb="CIERRE.ARCHIVO.SUBIR"
-                data-fb-nombre="Botón Subir archivo de cierre"
+                data-fb-nombre="Botón Subir archivo del sistema"
                 onClick={() => entrada.current?.click()}
               >
-                <Subir s={24} />
-                Subir archivo del sistema
+                <Subir s={22} />
+                Subir archivo
               </button>
             </>
           ) : (
-            <div
-              style={{ display: "flex", alignItems: "center", gap: 12, padding: 12, background: "var(--lienzo)", borderRadius: "var(--r-m)" }}
-              data-fb="CIERRE.ARCHIVO.LEIDO"
-              data-fb-nombre="Archivo del sistema leído"
-            >
-              <div className="miniatura" style={{ width: 34, height: 34, background: "var(--paper)", border: "1px solid var(--borde-1)" }}>
-                <Documento s={18} />
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, minWidth: 0 }}>
-                <div className="n" style={{ fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 10 }} data-fb="CIERRE.ARCHIVO.LEIDO" data-fb-nombre="Archivo leído">
+              <Documento s={20} style={{ color: "var(--texto-3)" }} />
+              <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, minWidth: 0 }}>
+                <span className="n" style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {cierre.archivo}
-                </div>
-                <div style={{ fontSize: 11, color: "var(--texto-3)" }}>
-                  DMS · leído a las {cierre.leidoEn} · {cierre.recibosSistema} recibos del turno
-                </div>
+                </span>
+                <span className="caption" style={{ fontSize: 11 }}>
+                  {hora12(cierre.leidoEn)} · {cierre.recibosSistema} recibos
+                </span>
               </div>
               {!firmado && (
                 <button
@@ -152,40 +127,29 @@ export default function PaginaCierre() {
                   data-fb="CIERRE.ARCHIVO.QUITAR"
                   data-fb-nombre="Quitar el archivo del sistema"
                   onClick={() => {
-                    if (confirm("¿Volver a leer el archivo del sistema?")) app.reabrirDia(dia);
+                    if (confirm("¿Volver a leer el archivo?")) app.reabrirDia(dia);
                   }}
                 >
-                  <Equis s={20} style={{ color: "var(--texto-3)" }} />
+                  <Equis s={18} />
                 </button>
               )}
             </div>
           )}
         </div>
 
-        {/* ================= 2 · CRUCE ================= */}
+        {/* ---------------- CRUCE ---------------- */}
         {cierre && (
           <div
             className="card entra"
-            style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}
+            style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}
             data-fb="CIERRE.BLOQUE.CRUCE"
-            data-fb-nombre="Bloque 2 · Cruce por medio de pago"
+            data-fb-nombre="Bloque del cruce por medio de pago"
           >
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <Paso n={2} />
-              <div style={{ display: "flex", flexDirection: "column", gap: 1, flexGrow: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>
-                  {cuadra ? "El turno cuadra contra el sistema" : "Hay medios de pago que no cuadran"}
-                </div>
-                <div className="caption" style={{ textWrap: "pretty" }}>
-                  MXN · {fechaLarga(dia)} · sistema DMS contra Σ recibos capturados en folios
-                </div>
-              </div>
-            </div>
-
+            <div className="overline" style={{ fontSize: 10 }}>Cruce por medio de pago · MXN</div>
             <table className="cruce" data-fb="CIERRE.TABLA" data-fb-nombre="Tabla del cruce">
               <thead>
                 <tr>
-                  <th style={{ width: "34%" }}>Medio de pago</th>
+                  <th style={{ width: "34%" }}>Medio</th>
                   <th style={{ width: "22%" }}>Sistema</th>
                   <th style={{ width: "22%" }}>Folios</th>
                   <th style={{ width: "22%" }}>Dif.</th>
@@ -200,36 +164,17 @@ export default function PaginaCierre() {
                       <td>{NOMBRE_MEDIO[m]}</td>
                       <td className="n">{money(cierre.sistema[m])}</td>
                       <td className="n">{money(enFolios[m])}</td>
-                      <td
-                        className="n"
-                        style={{
-                          fontWeight: mal ? 700 : 400,
-                          color: mal ? "var(--error-fg)" : "var(--texto-2)",
-                          background: mal ? "var(--error-bg)" : undefined,
-                        }}
-                      >
+                      <td className="n" style={{ fontWeight: mal ? 700 : 400, color: mal ? "var(--error-fg)" : "var(--texto-3)" }}>
                         {mal ? moneySigno(d) : "0.00"}
                       </td>
                     </tr>
                   );
                 })}
                 <tr>
-                  <td style={{ fontWeight: 700, borderBottom: 0 }}>Total del turno</td>
-                  <td className="n" style={{ fontWeight: 700, borderBottom: 0 }}>
-                    {money(sumaMedios(cierre.sistema))}
-                  </td>
-                  <td className="n" style={{ fontWeight: 700, borderBottom: 0 }}>
-                    {money(sumaMedios(enFolios))}
-                  </td>
-                  <td
-                    className="n"
-                    style={{
-                      fontWeight: 700,
-                      borderBottom: 0,
-                      color: cuadra ? "var(--exito-fg)" : "var(--error-fg)",
-                      background: cuadra ? "var(--exito-bg)" : "var(--error-bg)",
-                    }}
-                  >
+                  <td style={{ fontWeight: 700, borderBottom: 0 }}>Total</td>
+                  <td className="n" style={{ fontWeight: 700, borderBottom: 0 }}>{money(sumaMedios(cierre.sistema))}</td>
+                  <td className="n" style={{ fontWeight: 700, borderBottom: 0 }}>{money(sumaMedios(enFolios))}</td>
+                  <td className="n" style={{ fontWeight: 700, borderBottom: 0, color: cuadra ? "var(--exito-fg)" : "var(--error-fg)" }}>
                     {cuadra ? "0.00" : moneySigno(diferencia)}
                   </td>
                 </tr>
@@ -238,244 +183,126 @@ export default function PaginaCierre() {
           </div>
         )}
 
-        {/* ================= 3 · QUÉ LO EXPLICA ================= */}
-        {cierre && !cuadra && (
+        {/* ---------------- CAUSAS ---------------- */}
+        {cierre && !cuadra && (huerfanos.length > 0 || sinCerrar.length > 0) && (
           <div
             className="card entra"
-            style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}
+            style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}
             data-fb="CIERRE.BLOQUE.CAUSAS"
-            data-fb-nombre="Bloque 3 · Qué explica la diferencia"
+            data-fb-nombre="Bloque de causas de la diferencia"
           >
-            <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <Paso n={3} />
-              <div style={{ fontSize: 16, fontWeight: 600, flexGrow: 1 }}>Qué explica la diferencia</div>
-              <Chip tono="neutro" fb="CIERRE.CAUSAS.CONTADOR" fbNombre="Contador de causas">
-                {huerfanos.length} causa{huerfanos.length === 1 ? "" : "s"}
-              </Chip>
-            </div>
+            <div className="overline" style={{ fontSize: 10 }}>Qué lo explica</div>
 
             {huerfanos.map((h) => {
               const sugerido = candidatos.find((f) => Math.abs(faltante(f) - h.monto) < 0.01);
               return (
                 <div
                   key={h.id}
-                  style={{ display: "flex", flexDirection: "column", gap: 10, padding: 12, background: "var(--error-bg)", borderRadius: "var(--r-m)" }}
+                  style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}
                   data-fb="CIERRE.CAUSA.HUERFANO"
                   data-fb-nombre={`Recibo del sistema sin folio ${h.id}`}
                 >
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, minWidth: 0 }}>
-                      <div style={{ fontSize: 14, fontWeight: 600, color: "var(--error-fg)" }}>
-                        {h.id} · {NOMBRE_MEDIO[h.medio]} · <span className="n">{money(h.monto)}</span>
-                      </div>
-                      <div style={{ fontSize: 11, color: "var(--error-fg)", textWrap: "pretty" }}>
-                        Está en el archivo del sistema y no tiene folio
-                        {sugerido ? ` · coincide con lo que le falta a ${sugerido.factura.numero}` : ""}.
-                      </div>
-                    </div>
-                    {sugerido && !firmado && (
-                      <button
-                        className="btn"
-                        style={{ border: "1px solid var(--error-fg)", color: "var(--error-fg)", background: "transparent" }}
-                        data-fb="CIERRE.CAUSA.ASIGNAR"
-                        data-fb-nombre="Botón Asignar el recibo a un folio"
-                        onClick={() => app.asignarHuerfano(dia, h.id, sugerido.id)}
-                      >
-                        Asignar a {sugerido.factura.numero}
-                      </button>
-                    )}
-                    {!sugerido && !firmado && candidatos.length > 0 && (
-                      <select
-                        className="campo"
-                        style={{ maxWidth: 220 }}
-                        defaultValue=""
-                        data-fb="CIERRE.CAUSA.ELEGIR"
-                        data-fb-nombre="Elegir folio destino del recibo"
-                        onChange={(e) => {
-                          if (e.target.value) app.asignarHuerfano(dia, h.id, e.target.value);
-                        }}
-                      >
-                        <option value="">Asignar a un folio…</option>
-                        {candidatos.map((f) => (
-                          <option key={f.id} value={f.id}>
-                            {f.factura.numero} · faltan {money(faltante(f))}
-                          </option>
-                        ))}
-                      </select>
-                    )}
+                  <span className="chip chip-error">Sin folio</span>
+                  <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, minWidth: 0 }}>
+                    <span style={{ fontSize: 13, fontWeight: 600 }}>
+                      {h.id} · <span className="n">{money(h.monto)}</span>
+                    </span>
+                    <span className="caption" style={{ fontSize: 11 }}>
+                      {NOMBRE_MEDIO[h.medio]} · {hora12(h.hora)}
+                    </span>
                   </div>
+                  {!firmado && sugerido && (
+                    <button
+                      className="btn btn-linea"
+                      style={{ height: 36, padding: "0 12px", fontSize: 13 }}
+                      data-fb="CIERRE.CAUSA.ASIGNAR"
+                      data-fb-nombre="Botón Asignar el recibo a un folio"
+                      onClick={() => app.asignarHuerfano(dia, h.id, sugerido.id)}
+                    >
+                      Asignar a {sugerido.factura.numero}
+                    </button>
+                  )}
+                  {!firmado && !sugerido && candidatos.length > 0 && (
+                    <select
+                      className="campo"
+                      style={{ maxWidth: 200, height: 36, minHeight: 36, padding: "0 8px" }}
+                      defaultValue=""
+                      data-fb="CIERRE.CAUSA.ELEGIR"
+                      data-fb-nombre="Elegir folio destino"
+                      onChange={(e) => e.target.value && app.asignarHuerfano(dia, h.id, e.target.value)}
+                    >
+                      <option value="">Asignar a…</option>
+                      {candidatos.map((f) => (
+                        <option key={f.id} value={f.id}>
+                          {f.factura.numero} · {money(faltante(f))}
+                        </option>
+                      ))}
+                    </select>
+                  )}
                 </div>
               );
             })}
 
             {sinCerrar.length > 0 && (
               <div
-                style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, background: "var(--alerta-bg)", borderRadius: "var(--r-m)" }}
+                style={{ display: "flex", alignItems: "center", gap: 10 }}
                 data-fb="CIERRE.CAUSA.PENDIENTES"
-                data-fb-nombre="Aviso de folios sin cerrar"
+                data-fb-nombre="Folios sin cerrar"
               >
-                <Alerta s={20} style={{ color: "var(--alerta-fg)" }} />
-                <div style={{ fontSize: 12, color: "var(--alerta-fg)", flexGrow: 1, textWrap: "pretty" }}>
-                  {sinCerrar.length} folio{sinCerrar.length === 1 ? "" : "s"} sin cerrar. No bloquean
-                  el cierre del día: se quedan abiertos.
-                </div>
+                <span className="chip chip-alerta">{sinCerrar.length} sin cerrar</span>
+                <div style={{ flexGrow: 1 }} />
                 <button
-                  className="btn"
-                  style={{ border: "1px solid var(--alerta-fg)", color: "var(--alerta-fg)", background: "transparent" }}
+                  className="btn btn-linea"
+                  style={{ height: 36, padding: "0 12px", fontSize: 13 }}
                   onClick={() => router.push("/")}
                 >
                   Verlos
                 </button>
               </div>
             )}
-
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, background: "var(--lienzo)", borderRadius: "var(--r-m)" }}>
-              <Info s={20} style={{ color: "var(--texto-3)" }} />
-              <div style={{ fontSize: 12, color: "var(--texto-2)", textWrap: "pretty" }}>
-                El cierre no es un reporte: es la lista de cosas por arreglar, con el botón que las
-                arregla al lado de cada una.
-              </div>
-            </div>
           </div>
         )}
 
-        {/* ================= 4 · EXPLICACIÓN ================= */}
-        {cierre && !cuadra && (
+        {/* ---------------- FIRMADO ---------------- */}
+        {firmado && cierre && (
           <div
             className="card entra"
-            style={{ padding: 16, display: "flex", flexDirection: "column", gap: 14 }}
-            data-fb="CIERRE.BLOQUE.EXPLICACION"
-            data-fb-nombre="Bloque 4 · Explicación de la diferencia"
-          >
-            <div style={{ display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <Paso n={4} />
-              <div style={{ display: "flex", flexDirection: "column", gap: 1, flexGrow: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>Por qué hay una diferencia</div>
-                <div className="caption">Sólo aparece cuando la diferencia no es 0.00</div>
-              </div>
-              <Chip tono="error" forma="octagono" fb="CIERRE.EXPLICACION.OBLIGATORIA" fbNombre="Marca de obligatoria">
-                Obligatoria
-              </Chip>
-            </div>
-
-            {firmado ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                <div style={{ padding: 12, background: "var(--lienzo)", borderRadius: "var(--r-m)", fontSize: 14, lineHeight: 1.55 }}>
-                  {cierre.explicacion}
-                </div>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 11, color: "var(--texto-3)" }}>
-                  <Candado s={16} />
-                  Firmada por {cierre.firmadoPor} a las {horaCorta(cierre.firmadoEn)} · ya no se edita
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                <label className="etiqueta" htmlFor="exp">
-                  Explicación
-                </label>
-                <textarea
-                  id="exp"
-                  className="campo"
-                  rows={3}
-                  data-fb="CIERRE.EXPLICACION.TEXTO"
-                  data-fb-nombre="Campo de explicación de la diferencia"
-                  placeholder="Qué pasó, con nombres y montos. Esto lo lee quien valida el día."
-                  value={cierre.explicacion}
-                  onChange={(e) => app.setExplicacion(dia, e.target.value)}
-                />
-                {!explicacionLista && cierre.explicacion.length > 0 && (
-                  <div style={{ fontSize: 11, color: "var(--alerta-fg)" }}>
-                    Escribe un poco más: esto es el soporte de un faltante de caja.
-                  </div>
-                )}
-              </div>
-            )}
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              <div className="etiqueta">Evidencia</div>
-              {cierre.evidencias.map((ev) => (
-                <div
-                  key={ev.id}
-                  className="entra"
-                  style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 12px", background: "var(--lienzo)", borderRadius: "var(--r-m)" }}
-                  data-fb="CIERRE.EVIDENCIA.ITEM"
-                  data-fb-nombre="Archivo de evidencia adjunto"
-                >
-                  <div className="miniatura" style={{ width: 34, height: 34, background: "var(--paper)", border: "1px solid var(--borde-1)" }}>
-                    <Imagen s={18} />
-                  </div>
-                  <div style={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, minWidth: 0 }}>
-                    <div className="n" style={{ fontSize: 14, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {ev.nombre}
-                    </div>
-                    <div style={{ fontSize: 11, color: "var(--texto-3)" }}>
-                      {ev.hora} · {ev.tam}
-                    </div>
-                  </div>
-                  {!firmado && (
-                    <button className="btn-icono" aria-label="Quitar evidencia" onClick={() => app.quitarEvidencia(dia, ev.id)}>
-                      <Equis s={20} style={{ color: "var(--error-fg)" }} />
-                    </button>
-                  )}
-                </div>
-              ))}
-
-              {!firmado && (
-                <BotonesCaptura
-                  fbCamara="CIERRE.EVIDENCIA.CAMARA"
-                  fbArchivo="CIERRE.EVIDENCIA.ARCHIVO"
-                  grandes
-                  onArchivo={(n) => app.agregarEvidencia(dia, n)}
-                />
-              )}
-
-              {!firmado && !evidenciaLista && (
-                <div style={{ fontSize: 11, color: "var(--alerta-fg)" }}>
-                  Hace falta al menos una evidencia para poder cerrar con diferencia.
-                </div>
-              )}
-            </div>
-
-            <div style={{ display: "flex", alignItems: "center", gap: 10, padding: 12, background: "var(--lienzo)", borderRadius: "var(--r-m)" }}>
-              <Info s={20} style={{ color: "var(--texto-3)" }} />
-              <div style={{ fontSize: 12, color: "var(--texto-2)", textWrap: "pretty" }}>
-                La explicación queda firmada con tu usuario y la hora, y ya no se puede editar. El
-                segundo usuario la lee al validar el día: si no la acepta, devuelve el día y el
-                cierre se rehace.
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* ================= CERRADO ================= */}
-        {firmado && (
-          <div
-            className="card entra"
-            style={{ padding: 16, display: "flex", flexDirection: "column", gap: 12 }}
+            style={{ padding: 14, display: "flex", flexDirection: "column", gap: 10 }}
             data-fb="CIERRE.RESULTADO"
             data-fb-nombre="Resultado del cierre firmado"
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-              <div className="miniatura" style={{ background: cuadra ? "var(--exito-bg)" : "var(--error-bg)", color: cuadra ? "var(--exito-fg)" : "var(--error-fg)" }}>
-                {cuadra ? <Palomita s={20} /> : <Alerta s={20} />}
-              </div>
-              <div style={{ flexGrow: 1, minWidth: 0 }}>
-                <div style={{ fontSize: 15, fontWeight: 700 }}>
-                  {cuadra ? "Día cerrado y cuadrado" : "Día cerrado con diferencia"}
-                </div>
-                <div className="caption">
-                  Firmado por {cierre!.firmadoPor} a las {horaCorta(cierre!.firmadoEn)} ·{" "}
-                  {registro?.validadoEn ? `validado por ${registro.validadoPor}` : "esperando validación de un segundo usuario"}
-                </div>
-              </div>
+              <span className={`chip chip-${cuadra ? "exito" : "error"}`}>
+                {cuadra ? "Cerrado y cuadrado" : "Cerrado con diferencia"}
+              </span>
+              <div style={{ flexGrow: 1 }} />
+              <span className="caption" style={{ fontSize: 11 }}>
+                {cierre.firmadoPor} · {hora12(cierre.firmadoEn)}
+              </span>
             </div>
+
+            {cierre.explicacion && (
+              <div
+                style={{ fontSize: 13, lineHeight: 1.5, textWrap: "pretty" }}
+                data-fb="CIERRE.EXPLICACION.FIRMADA"
+                data-fb-nombre="Explicación firmada"
+              >
+                {cierre.explicacion}
+              </div>
+            )}
+            {cierre.evidencias.map((ev) => (
+              <div key={ev.id} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <Imagen s={16} style={{ color: "var(--texto-3)" }} />
+                <span className="n" style={{ fontSize: 12 }}>{ev.nombre}</span>
+              </div>
+            ))}
+
             <button
               className="btn btn-linea"
               data-fb="CIERRE.REABRIR"
-              data-fb-nombre="Botón Reabrir el cierre"
+              data-fb-nombre="Botón Reabrir el día"
               onClick={() => {
-                if (confirm("Reabrir el día deja los folios editables otra vez. ¿Seguir?"))
-                  app.reabrirDia(dia);
+                if (confirm("Reabrir deja los folios editables otra vez. ¿Seguir?")) app.reabrirDia(dia);
               }}
             >
               Reabrir el día
@@ -484,60 +311,105 @@ export default function PaginaCierre() {
         )}
       </div>
 
-      {/* ================= PIE ================= */}
+      {/* ---------------- PIE ---------------- */}
       {cierre && !firmado && (
-        <div className="pie">
-          <div style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 16px" }}>
-            <div style={{ display: "flex", flexDirection: "column", gap: 2, flexGrow: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontWeight: 600, color: cuadra ? "var(--exito-fg)" : "var(--error-fg)" }}>
-                {cuadra ? "El cruce quedó en cero" : `Vas a cerrar con ${moneySigno(diferencia)} de diferencia`}
-              </div>
-              <div className="caption" style={{ textWrap: "pretty" }}>
-                {cuadra
-                  ? "Al cerrar, los folios cuadrados pasan a Conciliado y el día espera validación."
-                  : puedeCerrar
-                    ? "Tu explicación y su evidencia viajan con el cierre."
-                    : "Falta la explicación y al menos una evidencia."}
-              </div>
+        <div className="pie" data-fb="CIERRE.PIE" data-fb-nombre="Banner inferior del cierre">
+          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+            <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, minWidth: 0 }} data-fb="CIERRE.PIE.AJUSTE" data-fb-nombre="Ajuste total">
+              <span className="overline" style={{ fontSize: 10 }}>Ajuste total</span>
+              <span
+                className="n"
+                style={{ fontSize: 20, fontWeight: 700, color: cuadra ? "var(--exito-fg)" : "var(--error-fg)" }}
+              >
+                {cuadra ? money(0) : moneySigno(diferencia)}
+              </span>
             </div>
             <button
-              className="btn btn-grande btn-solido"
-              style={{ padding: "0 20px", flexShrink: 0 }}
-              disabled={!puedeCerrar}
-              data-fb="CIERRE.ACCION.CERRAR"
-              data-fb-nombre="Botón Cerrar la caja del día"
-              onClick={() => app.cerrarDia(dia, diferencia)}
+              className="btn btn-solido btn-alto"
+              style={{ padding: "0 24px", flexShrink: 0 }}
+              data-fb="CIERRE.PIE.CERRAR"
+              data-fb-nombre="Botón Cerrar"
+              onClick={intentarCerrar}
             >
-              {cuadra ? "Cerrar caja del día" : "Cerrar con diferencia"}
+              Cerrar
             </button>
           </div>
         </div>
       )}
 
-      <Panel />
-      {verDetalle && null}
-    </div>
-  );
-}
+      {/* ---------------- DIFERENCIA ---------------- */}
+      {pidiendo && cierre && (
+        <div className="velo" data-fb-ignorar onClick={() => setPidiendo(false)}>
+          <div className="hoja" onClick={(e) => e.stopPropagation()}>
+            <div className="hoja-cabeza">
+              <span className="chip chip-error">{moneySigno(diferencia)}</span>
+              <div style={{ fontSize: 16, fontWeight: 700, flexGrow: 1 }}>Cierre con diferencia</div>
+              <button className="btn-icono" aria-label="Cerrar" onClick={() => setPidiendo(false)}>
+                <Equis s={20} />
+              </button>
+            </div>
+            <div className="hoja-cuerpo">
+              <label className="etiqueta" htmlFor="exp">Explicación</label>
+              <textarea
+                id="exp"
+                className="campo"
+                rows={3}
+                autoFocus
+                data-fb="CIERRE.DIF.EXPLICACION"
+                data-fb-nombre="Campo de explicación de la diferencia"
+                placeholder="Qué pasó, con nombres y montos."
+                value={cierre.explicacion}
+                onChange={(e) => app.setExplicacion(dia, e.target.value)}
+              />
 
-function Paso({ n }: { n: number }) {
-  return (
-    <div
-      style={{
-        width: 22,
-        height: 22,
-        borderRadius: 999,
-        background: "var(--marca)",
-        color: "var(--sobre-marca)",
-        fontSize: 12,
-        fontWeight: 700,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        flexShrink: 0,
-      }}
-    >
-      {n}
+              <div className="etiqueta">Evidencia</div>
+              {cierre.evidencias.map((ev) => (
+                <div
+                  key={ev.id}
+                  style={{ display: "flex", alignItems: "center", gap: 10, padding: "8px 10px", background: "var(--lienzo)", borderRadius: "var(--r-m)" }}
+                  data-fb="CIERRE.DIF.EVIDENCIA"
+                  data-fb-nombre="Evidencia adjunta"
+                >
+                  <Imagen s={18} style={{ color: "var(--texto-3)" }} />
+                  <div style={{ display: "flex", flexDirection: "column", flexGrow: 1, minWidth: 0 }}>
+                    <span className="n" style={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {ev.nombre}
+                    </span>
+                    <span className="caption" style={{ fontSize: 11 }}>{ev.tam}</span>
+                  </div>
+                  <button className="btn-icono" aria-label="Quitar" onClick={() => app.quitarEvidencia(dia, ev.id)}>
+                    <Equis s={18} />
+                  </button>
+                </div>
+              ))}
+
+              <BotonesCaptura
+                fbCamara="CIERRE.DIF.CAMARA"
+                fbArchivo="CIERRE.DIF.ARCHIVO"
+                etiquetaCamara="Tomar foto"
+                etiquetaArchivo="Subir archivo"
+                grandes={false}
+                onArchivo={(n) => app.agregarEvidencia(dia, n)}
+              />
+
+              <button
+                className="btn btn-solido btn-alto btn-lleno"
+                disabled={!puedeFirmar}
+                data-fb="CIERRE.DIF.CONFIRMAR"
+                data-fb-nombre="Botón Cerrar con diferencia"
+                onClick={() => {
+                  app.cerrarDia(dia, diferencia);
+                  setPidiendo(false);
+                }}
+              >
+                Cerrar con diferencia
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Flotantes />
     </div>
   );
 }

@@ -3,8 +3,8 @@
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useApp } from "@/lib/store";
-import { fechaLarga, horaCorta } from "@/lib/formato";
-import { Panel } from "@/components/Panel";
+import { fechaCortaISMO, hora12 } from "@/lib/formato";
+import { Flotantes } from "@/components/Flotantes";
 import { Atras, Copiar, Descargar, Candado } from "@/components/Iconos";
 
 /**
@@ -116,7 +116,7 @@ export default function PaginaAuditoria() {
                 <span className="caption">· {a.campo}</span>
                 <span style={{ flexGrow: 1 }} />
                 <span className="caption n">
-                  {a.usuario} · {horaCorta(a.en)}
+                  {a.usuario} · {hora12(a.en)}
                 </span>
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 10 }}>
@@ -125,14 +125,14 @@ export default function PaginaAuditoria() {
                 <Celda t="Ahora" v={a.nuevo} tono="var(--alerta-fg)" fuerte />
               </div>
               <div className="caption">
-                {fechaLarga(a.dia)} · folio {a.folioId.slice(0, 10)}
+                {fechaCortaISMO(a.dia)} · folio {a.folioId.slice(0, 10)}
               </div>
             </div>
           ))
         )}
       </div>
 
-      <Panel />
+      <Flotantes />
     </div>
   );
 }
